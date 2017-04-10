@@ -33,7 +33,6 @@ def main():
     if command == 'open':
         gripper.open()
     elif command == 'close':
-        rospy.loginfo(effort)
         gripper.close(effort)
     else:
         print_usage()
