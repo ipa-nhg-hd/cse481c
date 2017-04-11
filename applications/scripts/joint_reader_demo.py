@@ -17,7 +17,7 @@ def main():
     wait_for_time()
     argv = rospy.myargv()
     reader = JointStateReader()
-    rospy.sleep(0.1)
+    rospy.sleep(0.5)
     names = fetch_api.ArmJoints.names()
     arm_vals = reader.get_joints(names)
     for k, v in zip(names, arm_vals):
