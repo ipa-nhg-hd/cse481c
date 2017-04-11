@@ -23,6 +23,11 @@ def main():
     for k, v in zip(names, arm_vals):
         print '{}\t{}'.format(k, v)
 
+    other_joints = ['torso_lift_joint', 'l_gripper_finger_joint', 'r_gripper_finger_joint']
+    for j in other_joints:
+        val = reader.get_joint(j)
+        print '{}\t{}'.format(j, val)
+    
 
 if __name__ == '__main__':
     main()
