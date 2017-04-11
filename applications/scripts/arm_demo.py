@@ -11,7 +11,6 @@ def wait_for_time():
         pass
 
 
-
 def main():
     rospy.init_node('arm_demo')
     wait_for_time()
