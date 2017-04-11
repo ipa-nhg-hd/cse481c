@@ -9,7 +9,7 @@ import rospy
 from .arm_joints import ArmJoints
 
 ACTION_SERVER = 'arm_controller/follow_joint_trajectory'
-TIME_FROM_START = 10
+TIME_FROM_START = 5
 
 
 class Arm(object):
