@@ -29,7 +29,7 @@ class Arm(object):
 
     def move_to_joints(self, joint_state):
         goal = control_msgs.msg.FollowJointTrajectoryGoal()
-        goal.trajectory.joint_names.extend(joint_state.names())
+        goal.trajectory.joint_names.extend(ArmJoints.names())
         point = trajectory_msgs.msg.JointTrajectoryPoint()
         point.positions.extend(joint_state.values())
         point.time_from_start = rospy.Duration(TIME_FROM_START)
