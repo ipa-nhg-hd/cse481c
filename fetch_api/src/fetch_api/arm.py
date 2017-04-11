@@ -5,8 +5,6 @@ import rospy
 
 from .arm_joints import ArmJoints
 
-DEGS_TO_RADS = math.pi / 180
-
 
 class Arm(object):
     """Arm controls the robot's arm.
