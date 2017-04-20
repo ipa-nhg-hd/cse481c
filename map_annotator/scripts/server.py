@@ -161,7 +161,6 @@ class Server(object):
             if pose is None:
                 rospy.logerr('No pose named {}'.format(action.name))
             else:
-                rospy.loginfo('Sending robot to {} at {}'.format(action.name, pose))
                 goal = MoveBaseGoal()
                 goal.target_pose.header.frame_id = 'map'
                 goal.target_pose.header.stamp = rospy.Time().now()
