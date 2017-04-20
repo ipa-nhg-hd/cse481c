@@ -36,6 +36,7 @@ class PoseMarkers(object):
         """
         pose = Pose()
         pose.orientation.w = 1
+        pose.position.z = 0.05
         self.add(name, pose)
         self._im_server.applyChanges()
 
@@ -69,7 +70,6 @@ class PoseMarkers(object):
         arrow_marker = Marker()
         arrow_marker.type = Marker.ARROW
         arrow_marker.pose.orientation.w = 1
-        arrow_marker.pose.position.z = 0.05
         arrow_marker.scale.x = 0.45
         arrow_marker.scale.y = 0.05
         arrow_marker.scale.z = 0.05
@@ -197,6 +197,8 @@ def main():
     server.start()
 
     def handle_shutdown():
+        pn = PoseNames()
+        list_pub.publish(pn)
         database.save()
 
     rospy.on_shutdown(handle_shutdown)
