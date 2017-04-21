@@ -48,7 +48,6 @@ class Driver(object):
                 current_goal = copy.deepcopy(self._goal)
                 state = 'turn'
                 start_pos = copy.deepcopy(self._base.odom.position)
-                desired_distance = _linear_distance(start_pos, current_goal)
                 self._updated_goal = False
             if current_goal is None:
                 rate.sleep()
@@ -78,13 +77,11 @@ class Driver(object):
             else:
                 state = 'move'
 
-            distance_traveled = _linear_distance(current_pose.position, start_pos)
-            distance = desired_distance - distance_traveled
-
+            distance_remaining = _linear_distance(current_pose.position, current_goal)
             if state == 'move':
-                if math.fabs(distance) > 0.01:
-                    speed = max(0.02, min(0.25, distance))
-                    direction = 1 if distance > 0 else -1
+                if math.fabs(distance_remaining) > 0.005:
+                    speed = max(0.02, min(0.5, math.fabs(distance_remaining)))
+                    direction = 1 if distance_remaining > 0 else -1
                     linear_speed = direction * speed
                     angular_speed = 0
                 else:
