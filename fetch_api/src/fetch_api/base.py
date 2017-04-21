@@ -68,7 +68,7 @@ class Base(object):
         while self.odom is None:
             rospy.sleep(0.1)
         start = copy.deepcopy(self.odom)
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(25)
         distance_from_start = self._linear_distance(start, self.odom)
         while distance_from_start < math.fabs(distance):
             distance_from_start = self._linear_distance(start, self.odom)
@@ -90,18 +90,20 @@ class Base(object):
         """
         while self.odom is None:
             rospy.sleep(0.1)
-        start = copy.deepcopy(self.odom)
-        if angular_distance > 2 * math.pi:
-            angular_distance %= 2 * math.pi
-        elif angular_distance < -2 * math.pi:
-            angular_distance %= 2 * math.pi
-        distance_from_start = self._angular_distance(start, self.odom)
-        rate = rospy.Rate(10)
-        while distance_from_start < math.fabs(angular_distance):
-            distance_from_start = self._angular_distance(start, self.odom)
-            if distance_from_start >= math.fabs(angular_distance):
+        direction = -1 if angular_distance < 0 else 1
+
+        current_coord = self._yaw_from_quaternion(self.odom.orientation) % (2 * math.pi)
+        end_coord = (current_coord + angular_distance) % (2 * math.pi)
+        rate = rospy.Rate(25)
+
+        while True:
+            current_coord = self._yaw_from_quaternion(self.odom.orientation) % (2 * math.pi)
+            remaining = (direction * (end_coord - current_coord)) % (2 * math.pi)
+            if remaining < 0.01:
                 return
-            direction = -1 if angular_distance < 0 else 1
+            speed = max(0.25, min(1, remaining))
+            rospy.loginfo('{}'.format(remaining))
+            
             self.move(0, direction * speed)
             rate.sleep()
 

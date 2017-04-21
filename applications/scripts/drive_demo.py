@@ -33,37 +33,50 @@ def _yaw_from_quaternion(q):
 class Driver(object):
     def __init__(self, base):
         self._base = base
-        self.goal = None
+        self._goal = None
+        self._updated_goal = False
 
     def start(self):
-        current_goal = copy.deepcopy(self.goal)
+        current_goal = copy.deepcopy(self._goal)
         state = 'turn'
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(25)
+
+        linear_speed = 0
+        angular_speed = 0
         while True:
-            if current_goal != self.goal:
-                current_goal = copy.deepcopy(self.goal)
+            if self._updated_goal:
+                current_goal = copy.deepcopy(self._goal)
                 state = 'turn'
                 start_pos = copy.deepcopy(self._base.odom.position)
                 desired_distance = _linear_distance(start_pos, current_goal)
+                self._updated_goal = False
             if current_goal is None:
+                rate.sleep()
                 continue
 
             current_pose = self._base.odom
 
-            if state == 'turn':
-                dy = current_goal.y - current_pose.position.y
-                dx = current_goal.x - current_pose.position.x
-                desired_theta = math.atan2(dy, dx)
-                current_theta = _yaw_from_quaternion(current_pose.orientation)
-                angle = desired_theta - current_theta
-                if 2 * math.pi - angle < angle:
-                    angle -= 2 * math.pi
+            dy = current_goal.y - current_pose.position.y
+            dx = current_goal.x - current_pose.position.x
+            desired_theta = math.atan2(dy, dx)
+            current_theta = _yaw_from_quaternion(current_pose.orientation)
+            angle = (desired_theta - current_theta) % (2 * math.pi)
+            if 2 * math.pi - angle < angle:
+                angle -= 2 * math.pi
 
-                if math.fabs(angle) > 0.03:
-                    direction = 1 if angle > 0 else -1
-                    self._base.move(0, direction * 0.35)
-                else:
-                    state = 'move'
+            if math.fabs(angle) > 0.01:
+                if state == 'turn':
+                    linear_speed = 0
+                state = 'turn'
+            else:
+                state = 'move'
+
+            if state == 'turn':
+                speed = max(0.25, min(1, math.fabs(angle)))
+                direction = 1 if angle > 0 else -1
+                angular_speed = direction * speed
+            else:
+                state = 'move'
 
             distance_traveled = _linear_distance(current_pose.position, start_pos)
             distance = desired_distance - distance_traveled
@@ -72,9 +85,18 @@ class Driver(object):
                 if math.fabs(distance) > 0.01:
                     speed = max(0.02, min(0.25, distance))
                     direction = 1 if distance > 0 else -1
-                    self._base.move(direction * speed, 0)
+                    linear_speed = direction * speed
+                    angular_speed = 0
+                else:
+                    current_goal = None
+                    self._goal = None
 
+            self._base.move(linear_speed, angular_speed)
             rate.sleep()
+
+    def set_goal(self, goal):
+        self._goal = goal
+        self._updated_goal = True
 
 
 class DestinationMarker(object):
@@ -120,7 +142,7 @@ class DestinationMarker(object):
             position = interactive_marker.pose.position
             rospy.loginfo('User clicked {} at {}, {}, {}'.format(
                 msg.marker_name, position.x, position.y, position.z))
-            self._driver.goal = position
+            self._driver.set_goal(position)
 
 
 def main():
