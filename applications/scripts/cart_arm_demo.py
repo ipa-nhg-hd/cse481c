@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from geometry_msgs.msg import Pose, Point, Quaternion
+from geometry_msgs.msg import PoseStamped
 import fetch_api
 import rospy
 import sys
@@ -17,14 +17,27 @@ def main():
     rospy.init_node('cart_arm_demo')
     wait_for_time()
     argv = rospy.myargv()
-    pose1 = Pose(
-        Point(0.042, 0.384, 1.826), Quaternion(0.173, -0.693, -0.242, 0.657))
-    pose2 = Pose(
-        Point(0.047, 0.545, 1.822), Quaternion(-0.274, -0.701, 0.173, 0.635))
-    gripper_poses = [pose1, pose2]
+    pose1 = PoseStamped()
+    pose1.header.frame_id = 'base_link'
+    pose1.pose.position.x = 0.042
+    pose1.pose.position.y = 0.384
+    pose1.pose.position.z = 1.826
+    pose1.pose.orientation.x = 0.173
+    pose1.pose.orientation.y = -0.693
+    pose1.pose.orientation.z = -0.242
+    pose1.pose.orientation.w = 0.657
 
-    torso = fetch_api.Torso()
-    torso.set_height(fetch_api.Torso.MAX_HEIGHT)
+    pose2 = PoseStamped()
+    pose2.header.frame_id = 'base_link'
+    pose2.pose.position.x = 0.047
+    pose2.pose.position.y = 0.545
+    pose2.pose.position.z = 1.822
+    pose2.pose.orientation.x = -0.274
+    pose2.pose.orientation.y = -0.701
+    pose2.pose.orientation.z = 0.173
+    pose2.pose.orientation.w = 0.635
+
+    gripper_poses = [pose1, pose2]
 
     arm = fetch_api.Arm()
 
@@ -33,11 +46,11 @@ def main():
     rospy.on_shutdown(on_shutdown)
 
     while not rospy.is_shutdown():
-        for pose in gripper_poses:
-            error = arm.move_to_base_pose(pose)
+        for pose_stamped in gripper_poses:
+            error = arm.move_to_pose(pose_stamped, replan=True, execution_timeout=2)
             if error is not None:
                 rospy.logerr(error)
-            rospy.sleep(0.5)
+            rospy.sleep(1)
 
 
 if __name__ == '__main__':
