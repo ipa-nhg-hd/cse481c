@@ -2,7 +2,6 @@
 
 from geometry_msgs.msg import Pose, Point, Quaternion
 import fetch_api
-import moveit_commander
 import rospy
 import sys
 
@@ -15,7 +14,6 @@ def wait_for_time():
 
 
 def main():
-    moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('cart_arm_demo')
     wait_for_time()
     argv = rospy.myargv()
