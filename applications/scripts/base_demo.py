@@ -18,7 +18,7 @@ def print_usage():
 
 
 def main():
-    rospy.init_node('arm_demo')
+    rospy.init_node('base_demo')
     wait_for_time()
     argv = rospy.myargv()
     if len(argv) < 3:
