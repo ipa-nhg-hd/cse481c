@@ -65,7 +65,7 @@ class MoveItGoalBuilder(object):
         self.start_state = moveit_msgs.msg.RobotState()
         self.start_state.is_diff = True
         self.tolerance = 0.01
-        self._orientation_contraints = []
+        self._orientation_constraints = []
         self._pose_goal = None
         self._joint_names = None
         self._joint_positions = None
@@ -95,13 +95,13 @@ class MoveItGoalBuilder(object):
         self._joint_positions = joint_positions
         self._pose_goal = None
 
-    def add_path_orientation_contraint(self, o_constraint):
+    def add_path_orientation_constraint(self, o_constraint):
         """Adds an orientation constraint to the path.
 
         Args:
             o_constraint: A moveit_msgs/OrientationConstraint.
         """
-        self._orientation_contraints.append(copy.deepcopy(o_constraint))
+        self._orientation_constraints.append(copy.deepcopy(o_constraint))
         self.planner_id = 'RRTConnectkConfigDefault'
 
     def build(self, tf_timeout=rospy.Duration(5.0)):
@@ -171,7 +171,7 @@ class MoveItGoalBuilder(object):
             goal.request.goal_constraints.append(c1)
 
         # Set path constraints
-        goal.request.path_constraints.orientation_constraints = self._orientation_contraints 
+        goal.request.path_constraints.orientation_constraints = self._orientation_constraints 
 
         # Set trajectory constraints
 
