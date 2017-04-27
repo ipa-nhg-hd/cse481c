@@ -88,9 +88,6 @@ class Arm(object):
         arm = fetch_api.Arm()
         arm.move_to_joints(joints)
     """
-    BASE_FRAME = 'base_link'
-    EE_FRAME = 'wrist_roll_link'
-
     def __init__(self):
         self._joint_client = actionlib.SimpleActionClient(
             JOINT_ACTION_SERVER, control_msgs.msg.FollowJointTrajectoryAction)
@@ -172,7 +169,7 @@ class Arm(object):
     def move_to_pose(self,
                      pose_stamped,
                      allowed_planning_time=10.0,
-                     execution_timeout=rospy.Duration(15.0),
+                     execution_timeout=15.0,
                      group_name='arm',
                      num_planning_attempts=1,
                      orientation_constraint=None,
@@ -272,7 +269,6 @@ class Arm(object):
         for name, position in zip(joint_state.name, joint_state.position):
             if name in ArmJoints.names():
                 joints.append((name, position))
-                rospy.loginfo('{}: {}'.format(name, position))
         return joints
 
     def cancel_all_goals(self):
