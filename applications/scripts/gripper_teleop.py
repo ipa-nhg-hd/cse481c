@@ -354,11 +354,11 @@ def main():
 
     arm = fetch_api.Arm()
     gripper = fetch_api.Gripper()
-    im_server = InteractiveMarkerServer('gripper_im_server', q_size=10)
+    im_server = InteractiveMarkerServer('gripper_im_server', q_size=2)
     teleop = GripperTeleop(arm, gripper, im_server)
     teleop.start()
 
-    pp_im_server = InteractiveMarkerServer('pick_place_im_server', q_size=10)
+    pp_im_server = InteractiveMarkerServer('pick_place_im_server', q_size=2)
     pick_place = PickPlaceTeleop(arm, gripper, pp_im_server)
     pick_place.start()
 
