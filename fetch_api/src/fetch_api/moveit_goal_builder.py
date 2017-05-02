@@ -58,7 +58,7 @@ class MoveItGoalBuilder(object):
         self.max_velocity_scaling_factor = 0
         self.num_planning_attempts = 1
         self.plan_only = False
-        self.planner_id = ''
+        self.planner_id = 'RRTConnectkConfigDefault'
         self.replan = False
         self.replan_attempts = 5
         self.replan_delay = 1
@@ -102,7 +102,6 @@ class MoveItGoalBuilder(object):
             o_constraint: A moveit_msgs/OrientationConstraint.
         """
         self._orientation_contraints.append(copy.deepcopy(o_constraint))
-        self.planner_id = 'RRTConnectkConfigDefault'
 
     def build(self, tf_timeout=rospy.Duration(5.0)):
         """Builds the goal message.

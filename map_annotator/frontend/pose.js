@@ -1,13 +1,23 @@
-Pose = function(ros, name) {
+Pose = function(userActions, name) {
   var that = this;
   this.name = name;
 
   function handleGoTo() {
-    console.log('Go to ' + name + ' clicked.');
+    var msg = new ROSLIB.Message({
+      command: 'goto',
+      name: name,
+      updated_name: ''
+    });
+    userActions.publish(msg);
   }
 
   function handleDelete() {
-    console.log('Delete ' + name + ' clicked.');
+    var msg = new ROSLIB.Message({
+      command: 'delete',
+      name: name,
+      updated_name: ''
+    });
+    userActions.publish(msg);
   }
 
   this.render = function() {
