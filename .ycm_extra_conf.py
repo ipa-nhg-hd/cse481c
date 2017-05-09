@@ -55,7 +55,9 @@ flags = [
 '-I',
 '/usr/include/pcl-1.7',
 '-I',
-'/usr/include/eigen3'
+'/usr/include/eigen3',
+'-I',
+'perception/include'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the
