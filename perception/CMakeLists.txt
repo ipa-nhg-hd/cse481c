@@ -14,12 +14,19 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   simple_grasping
+  sensor_msgs
   tf
 )
+
+find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+link_directories(
+  ${catkin_LIBRARY_DIRS}
+  ${PCL_LIBRARY_DIRS}
+)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -127,12 +134,15 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare libraries
 add_library(perception_box_fitter src/box_fitter.cpp)
 add_dependencies(perception_box_fitter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(perception_box_fitter ${catkin_LIBRARIES})
+target_link_libraries(perception_box_fitter
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES})
 
 add_library(perception_crop src/crop.cpp)
 add_dependencies(perception_crop ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -142,9 +152,15 @@ add_library(perception_downsample src/downsample.cpp)
 add_dependencies(perception_downsample ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(perception_downsample ${catkin_LIBRARIES})
 
+add_library(perception_feature_extraction src/feature_extraction.cpp)
+add_dependencies(perception_feature_extraction ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(perception_feature_extraction
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES})
+
 add_library(perception_segmentation src/segmentation.cpp)
 add_dependencies(perception_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(perception_segmentation ${catkin_LIBRARIES})
+target_link_libraries(perception_segmentation perception_box_fitter ${catkin_LIBRARIES})
 
 # Declare executables
 add_executable(perception_save_cloud_main src/save_cloud_main.cpp)
@@ -162,6 +178,16 @@ target_link_libraries(perception_point_cloud_demo
   perception_downsample
   perception_segmentation
   ${catkin_LIBRARIES}
+)
+
+add_executable(perception_extract_features_main src/extract_features_main.cpp)
+set_target_properties(perception_extract_features_main PROPERTIES OUTPUT_NAME extract_features PREFIX "")
+add_dependencies(perception_extract_features_main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(perception_extract_features_main
+  perception_feature_extraction
+  perception_segmentation
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 #############
