@@ -9,6 +9,8 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 
+#include "perception/object.h"
+
 namespace perception {
 // Finds the largest horizontal surface in the given point cloud.
 // This is useful for adding a collision object to MoveIt.
@@ -32,6 +34,14 @@ void SegmentSurface(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 void SegmentSurfaceObjects(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
                            pcl::PointIndices::Ptr surface_indices,
                            std::vector<pcl::PointIndices>* object_indices);
+
+// Does a complete tabletop segmentation pipeline.
+//
+// Args:
+//  cloud: The point cloud with the surface and the objects above it.
+//  objects: The output objects.
+void SegmentTabletopScene(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
+                          std::vector<Object>* objects);
 
 // Computes the axis-aligned bounding box of a point cloud.
 //
