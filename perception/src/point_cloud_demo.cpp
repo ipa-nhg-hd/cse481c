@@ -21,10 +21,10 @@ int main(int argc, char** argv) {
   ros::Publisher marker_pub =
       nh.advertise<visualization_msgs::Marker>("visualization_marker", 1, true);
   perception::Segmenter segmenter(table_pub, above_table_pub, marker_pub);
-  // ros::Subscriber sub =
-  //    nh.subscribe("cloud_in", 1, &perception::Cropper::Callback, &cropper);
   ros::Subscriber sub =
-      nh.subscribe("cloud_in", 1, &perception::Segmenter::Callback, &segmenter);
+      nh.subscribe("cloud_in", 1, &perception::Cropper::Callback, &cropper);
+  ros::Subscriber segment_sub = nh.subscribe(
+      "cropped_cloud", 1, &perception::Segmenter::Callback, &segmenter);
   // ros::Subscriber cropped_sub = nh.subscribe(
   //    "cropped_cloud", 1, &perception::Segmenter::Callback, &segmenter);
   ros::spin();
