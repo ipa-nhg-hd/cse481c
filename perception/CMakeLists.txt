@@ -109,6 +109,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES
+    perception_box_fitter
     perception_crop
     perception_downsample
     perception_segmentation
@@ -129,6 +130,10 @@ include_directories(
 )
 
 ## Declare libraries
+add_library(perception_box_fitter src/box_fitter.cpp)
+add_dependencies(perception_box_fitter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(perception_box_fitter ${catkin_LIBRARIES})
+
 add_library(perception_crop src/crop.cpp)
 add_dependencies(perception_crop ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(perception_crop ${catkin_LIBRARIES})
