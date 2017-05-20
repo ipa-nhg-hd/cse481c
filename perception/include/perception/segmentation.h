@@ -10,6 +10,7 @@
 #include "sensor_msgs/PointCloud2.h"
 
 #include "perception/object.h"
+#include "perception/object_recognizer.h"
 
 namespace perception {
 // Finds the largest horizontal surface in the given point cloud.
@@ -58,12 +59,14 @@ class Segmenter {
  public:
   Segmenter(const ros::Publisher& surface_points_pub,
             const ros::Publisher& above_surface_pub,
-            const ros::Publisher& marker_pub);
+            const ros::Publisher& marker_pub,
+            const ObjectRecognizer& recognizer);
   void Callback(const sensor_msgs::PointCloud2& msg);
 
  private:
   ros::Publisher surface_points_pub_;
   ros::Publisher above_surface_pub_;
   ros::Publisher marker_pub_;
+  ObjectRecognizer recognizer_;
 };
 }  // namespace perception

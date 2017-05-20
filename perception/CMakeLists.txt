@@ -119,6 +119,8 @@ catkin_package(
     perception_box_fitter
     perception_crop
     perception_downsample
+    perception_feature_extraction
+    perception_object_recognizer
     perception_segmentation
 #  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
@@ -158,9 +160,17 @@ target_link_libraries(perception_feature_extraction
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES})
 
+add_library(perception_object_recognizer src/object_recognizer.cpp)
+add_dependencies(perception_object_recognizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(perception_object_recognizer ${catkin_LIBRARIES})
+
 add_library(perception_segmentation src/segmentation.cpp)
 add_dependencies(perception_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(perception_segmentation perception_box_fitter ${catkin_LIBRARIES})
+target_link_libraries(perception_segmentation
+  perception_box_fitter
+  perception_feature_extraction
+  perception_object_recognizer
+  ${catkin_LIBRARIES})
 
 # Declare executables
 add_executable(perception_save_cloud_main src/save_cloud_main.cpp)
@@ -176,6 +186,7 @@ add_dependencies(perception_point_cloud_demo ${${PROJECT_NAME}_EXPORTED_TARGETS}
 target_link_libraries(perception_point_cloud_demo
   perception_crop
   perception_downsample
+  perception_object_recognizer
   perception_segmentation
   ${catkin_LIBRARIES}
 )
