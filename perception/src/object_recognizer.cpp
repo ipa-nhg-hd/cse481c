@@ -55,7 +55,7 @@ ObjectRecognizer::ObjectRecognizer(const std::vector<ObjectFeatures>& dataset)
 void ObjectRecognizer::Recognize(const Object& object, std::string* name,
                                  double* confidence) {
   ObjectFeatures input_features;
-  ExtractSizeFeatures(object, &input_features);
+  ExtractFeatures(object, &input_features);
 
   double min_distance = std::numeric_limits<double>::max();
   double second_min_distance = std::numeric_limits<double>::max();
