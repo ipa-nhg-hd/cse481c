@@ -1,6 +1,8 @@
 #include "perception/segmentation.h"
 
 #include <limits.h>
+#include <math.h>
+#include <sstream>
 #include <vector>
 
 #include "geometry_msgs/Pose.h"
@@ -19,9 +21,10 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "shape_msgs/SolidPrimitive.h"
-#include "simple_grasping/shape_extraction.h"
 #include "visualization_msgs/Marker.h"
 
+#include "perception/box_fitter.h"
+#include "perception/object_recognizer.h"
 #include "perception/typedefs.h"
 
 using geometry_msgs::Pose;
@@ -120,20 +123,8 @@ void GetAxisAlignedBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
   dimensions->z = max_pt.z() - min_pt.z();
 }
 
-Segmenter::Segmenter(const ros::Publisher& surface_points_pub,
-                     const ros::Publisher& above_surface_pub,
-                     const ros::Publisher& marker_pub)
-    : surface_points_pub_(surface_points_pub),
-      above_surface_pub_(above_surface_pub),
-      marker_pub_(marker_pub) {}
-
-void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
-  PointCloudC::Ptr cloud_unfiltered(new PointCloudC());
-  pcl::fromROSMsg(msg, *cloud_unfiltered);
-  PointCloudC::Ptr cloud(new PointCloudC());
-  std::vector<int> index;
-  pcl::removeNaNFromPointCloud(*cloud_unfiltered, *cloud, index);
-
+void SegmentTabletopScene(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
+                          std::vector<Object>* objects) {
   pcl::ModelCoefficients::Ptr coeff(new pcl::ModelCoefficients());
   pcl::PointIndices::Ptr table_inliers(new pcl::PointIndices());
   SegmentSurface(cloud, table_inliers, coeff);
@@ -144,37 +135,6 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
   extract.setIndices(table_inliers);
   extract.setNegative(false);
   extract.filter(*cloud_out);
-  sensor_msgs::PointCloud2 msg_out;
-  pcl::toROSMsg(*cloud_out, msg_out);
-  surface_points_pub_.publish(msg_out);
-
-  PointCloudC::Ptr extract_out(new PointCloudC());
-  shape_msgs::SolidPrimitive shape;
-  geometry_msgs::Pose table_pose;
-  simple_grasping::extractShape(*cloud_out, coeff, *extract_out, shape,
-                                table_pose);
-
-  if (shape.type == shape_msgs::SolidPrimitive::BOX) {
-    visualization_msgs::Marker table_marker;
-    table_marker.ns = "table";
-    table_marker.header.frame_id = "base_link";
-    table_marker.type = visualization_msgs::Marker::CUBE;
-    table_marker.pose = table_pose;
-    table_marker.scale.x = shape.dimensions[0];
-    table_marker.scale.y = shape.dimensions[1];
-    table_marker.scale.z = shape.dimensions[2];
-    table_marker.pose.position.z -= table_marker.scale.z;
-    // GetAxisAlignedBoundingBox(cloud_out, &table_marker.pose,
-    // &table_marker.scale);
-    table_marker.color.r = 1;
-    table_marker.color.a = 0.8;
-    marker_pub_.publish(table_marker);
-  }
-
-  extract.setNegative(true);
-  extract.filter(*cloud_out);
-  pcl::toROSMsg(*cloud_out, msg_out);
-  above_surface_pub_.publish(msg_out);
 
   std::vector<pcl::PointIndices> object_indices;
   SegmentSurfaceObjects(cloud, table_inliers, &object_indices);
@@ -189,17 +149,82 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
     PointCloudC::Ptr object_cloud(new PointCloudC());
     extract.filter(*object_cloud);
 
+    PointCloudC::Ptr extract_out(new PointCloudC());
+    shape_msgs::SolidPrimitive shape;
+    geometry_msgs::Pose obj_pose;
+    FitBox(*object_cloud, coeff, *extract_out, shape, obj_pose);
+
+    Object obj;
+    obj.cloud = object_cloud;
+    obj.pose = obj_pose;
+    obj.dimensions.x = shape.dimensions[0];
+    obj.dimensions.y = shape.dimensions[1];
+    obj.dimensions.z = shape.dimensions[2];
+    objects->push_back(obj);
+  }
+}
+
+Segmenter::Segmenter(const ros::Publisher& surface_points_pub,
+                     const ros::Publisher& above_surface_pub,
+                     const ros::Publisher& marker_pub,
+                     const ObjectRecognizer& recognizer)
+    : surface_points_pub_(surface_points_pub),
+      above_surface_pub_(above_surface_pub),
+      marker_pub_(marker_pub),
+      recognizer_(recognizer) {}
+
+void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
+  PointCloudC::Ptr cloud_unfiltered(new PointCloudC());
+  pcl::fromROSMsg(msg, *cloud_unfiltered);
+  PointCloudC::Ptr cloud(new PointCloudC());
+  std::vector<int> index;
+  pcl::removeNaNFromPointCloud(*cloud_unfiltered, *cloud, index);
+
+  std::vector<Object> objects;
+  SegmentTabletopScene(cloud, &objects);
+
+  for (size_t i = 0; i < objects.size(); ++i) {
+    const Object& object = objects[i];
+
     // Publish a bounding box around it.
     visualization_msgs::Marker object_marker;
     object_marker.ns = "objects";
     object_marker.id = i;
     object_marker.header.frame_id = "base_link";
     object_marker.type = visualization_msgs::Marker::CUBE;
-    GetAxisAlignedBoundingBox(object_cloud, &object_marker.pose,
-                              &object_marker.scale);
+    object_marker.pose = object.pose;
+    object_marker.scale = object.dimensions;
     object_marker.color.g = 1;
     object_marker.color.a = 0.3;
     marker_pub_.publish(object_marker);
+
+    // Recognize the object.
+    std::string name;
+    double confidence;
+    recognizer_.Recognize(object, &name, &confidence);
+    confidence = round(1000 * confidence) / 1000;
+
+    std::stringstream ss;
+    ss << name << " (" << confidence << ")";
+
+    // Publish the recognition result.
+    visualization_msgs::Marker name_marker;
+    name_marker.ns = "recognition";
+    name_marker.id = i;
+    name_marker.header.frame_id = "base_link";
+    name_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    name_marker.pose.position = object.pose.position;
+    name_marker.pose.position.z += 0.1;
+    name_marker.pose.orientation.w = 1;
+    name_marker.scale.x = 0.025;
+    name_marker.scale.y = 0.025;
+    name_marker.scale.z = 0.025;
+    name_marker.color.r = 0;
+    name_marker.color.g = 0;
+    name_marker.color.b = 1.0;
+    name_marker.color.a = 1.0;
+    name_marker.text = ss.str();
+    marker_pub_.publish(name_marker);
   }
 }
 }  // namespace perception
