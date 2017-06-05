@@ -163,7 +163,7 @@ class GripperTeleop(object):
             if feedback.menu_entry_id == 1:
                 error = self._arm.move_to_pose(ps)
                 if error is not None:
-                    rospy.logerror(error)
+                    rospy.logerr(error)
             elif feedback.menu_entry_id == 2:
                 self._gripper.open()
             elif feedback.menu_entry_id == 3:
@@ -256,16 +256,16 @@ class PickPlaceTeleop(object):
 
                 error = self._arm.move_to_pose(pregrasp_ps)
                 if error is not None:
-                    rospy.logerror(error)
+                    rospy.logerr(error)
                     return
                 error = self._arm.move_to_pose(grasp_ps)
                 if error is not None:
-                    rospy.logerror(error)
+                    rospy.logerr(error)
                     return
                 self._gripper.close()
                 error = self._arm.move_to_pose(lift_ps)
                 if error is not None:
-                    rospy.logerror(error)
+                    rospy.logerr(error)
                     return
             elif feedback.menu_entry_id == 2:
                 self._gripper.open()
