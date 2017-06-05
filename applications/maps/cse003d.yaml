@@ -1,0 +1,7 @@
+image: /home/team6/catkin_ws/src/cse481c/applications/maps/cse003d.pgm
+resolution: 0.050000
+origin: [-7.0, -5.0, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
